@@ -1,0 +1,26 @@
+[
+  {
+    "subtopic": "Fetal Lung Development",
+    "question": "In utero, the fetal lung is filled with fluid and contributes essentially nothing to gas exchange. Which best explains the resulting circulatory pattern?",
+    "choices": [
+      "Decreased pulmonary vascular resistance, increased pulmonary blood flow",
+      "Increased pulmonary vascular resistance, with most blood shunted away from the lungs",
+      "Normal pulmonary vascular resistance with no shunting",
+      "Decreased pulmonary vascular resistance due to active surfactant production in utero"
+    ],
+    "answer": 1,
+    "explanation": "A fluid-filled, collapsed lung offers high resistance to blood flow, so pulmonary vascular resistance is elevated and right ventricular output is preferentially shunted away from the lungs (via the ductus arteriosus and foramen ovale) rather than through the pulmonary circulation."
+  },
+  {
+    "subtopic": "Surfactant",
+    "question": "Surfactant, which lowers alveolar surface tension and prevents collapse, is produced by which cell type?",
+    "choices": [
+      "Type I pneumocytes",
+      "Type II pneumocytes",
+      "Club (Clara) cells",
+      "Alveolar macrophages"
+    ],
+    "answer": 1,
+    "explanation": "Type II pneumocytes produce surfactant and also serve as the stem cells that can regenerate the alveolar epithelium. Type I pneumocytes (A) form the thin gas-exchange surface but do not make surfactant."
+  }
+]

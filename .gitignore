@@ -1,0 +1,17 @@
+# ---- PRIVATE: never commit these to a public repo ----
+SETUP_PRIVATE.md
+GENERATION_PROMPT.md
+transcripts/
+*.transcript.txt
+private/
+
+# local rollback copies made by import_user_data.py
+data/backups/
+
+# dependencies
+node_modules/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.vscode/

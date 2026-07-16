@@ -1,0 +1,9 @@
+{
+  "name": "step1-quiz",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "STEP 1 review quiz with serverless question generation",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}

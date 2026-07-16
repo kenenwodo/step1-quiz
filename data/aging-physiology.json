@@ -1,0 +1,14 @@
+[
+  {
+    "subtopic": "Placeholder",
+    "question": "This topic ('Aging Physiology') has no real questions yet. Add them by generating from a transcript and saving to this file.",
+    "choices": [
+      "Okay",
+      "Got it",
+      "Understood",
+      "Will do"
+    ],
+    "answer": 0,
+    "explanation": "Replace this placeholder with real questions generated from a transcript for this topic."
+  }
+]

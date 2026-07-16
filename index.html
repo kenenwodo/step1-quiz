@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STEP 1 Review Quiz</title>
+<style>
+  :root {
+    --pink-bg: #fdeff4; --pink-mid: #f9d6e3; --pink-accent: #e56a95;
+    --pink-deep: #c04574; --ink: #3a2a30; --muted: #9a7d88; --card: #ffffff;
+    --correct: #3fa06a; --correct-bg: #e6f6ec; --wrong: #d15b6a; --wrong-bg: #fce8ea;
+    --shadow: 0 8px 30px rgba(197, 74, 116, 0.15);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(160deg, var(--pink-bg) 0%, var(--pink-mid) 100%);
+    color: var(--ink); min-height: 100vh; padding: 24px 16px 64px; line-height: 1.5; }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 24px; }
+  h1 { color: var(--pink-deep); font-size: 1.8rem; margin-bottom: 6px; }
+  .subtitle { color: var(--pink-accent); font-size: 0.95rem; }
+  .card { background: var(--card); border-radius: 18px; box-shadow: var(--shadow);
+    padding: 24px; margin-bottom: 20px; }
+  .controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  label { font-weight: 600; color: var(--pink-deep); font-size: 0.9rem; }
+  select { flex: 1; min-width: 180px; padding: 10px 12px; border-radius: 10px;
+    border: 2px solid var(--pink-mid); background: #fff; font-size: 1rem; color: var(--ink); cursor: pointer; }
+  select:focus { outline: none; border-color: var(--pink-accent); }
+  .stats { display: flex; justify-content: space-between; align-items: center;
+    margin-top: 16px; font-size: 0.9rem; color: var(--pink-deep); }
+  .progress-track { height: 8px; background: var(--pink-mid); border-radius: 999px; overflow: hidden; margin-top: 12px; }
+  .progress-fill { height: 100%; background: var(--pink-accent); width: 0%; transition: width 0.3s ease; }
+  .qtext { font-size: 1.15rem; font-weight: 600; margin-bottom: 18px; }
+  .qmeta { display: inline-block; font-size: 0.72rem; color: var(--pink-deep);
+    text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 14px;
+    border: 1px solid var(--pink-mid); padding: 4px 10px; border-radius: 999px; }
+  .choices { display: flex; flex-direction: column; gap: 10px; }
+  .choice { display: flex; align-items: center; gap: 12px; text-align: left;
+    padding: 14px 16px; border-radius: 12px; border: 2px solid var(--pink-mid);
+    background: #fff; font-size: 1rem; color: var(--ink); cursor: pointer; transition: all 0.15s ease; }
+  .choice .badge { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+    background: var(--pink-mid); color: var(--pink-deep); font-weight: 700;
+    display: flex; align-items: center; justify-content: center; font-size: 0.85rem; }
+  .choice:hover:not(:disabled) { border-color: var(--pink-accent); background: #fff6fa; }
+  .choice:disabled { cursor: default; }
+  .choice.correct { border-color: var(--correct); background: var(--correct-bg); font-weight: 600; }
+  .choice.correct .badge { background: var(--correct); color: #fff; }
+  .choice.wrong { border-color: var(--wrong); background: var(--wrong-bg); }
+  .choice.wrong .badge { background: var(--wrong); color: #fff; }
+  .choice.dim { opacity: 0.5; }
+  .explanation { margin-top: 18px; display: none; }
+  .explanation.show { display: block; }
+  .verdict { font-weight: 700; margin-bottom: 6px; }
+  .verdict.right { color: var(--correct); }
+  .verdict.wrong { color: var(--wrong); }
+  .exp-block { padding: 16px; border-radius: 12px; background: #fdf4f8;
+    border-left: 4px solid var(--pink-accent); font-size: 0.95rem; margin-top: 10px; }
+  .exp-block strong { color: var(--pink-deep); }
+  .nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 20px; }
+  .btn { padding: 12px 20px; border-radius: 10px; border: none; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.15s ease; }
+  .btn-primary { background: var(--pink-accent); color: #fff; }
+  .btn-primary:hover { background: var(--pink-deep); }
+  .btn-ghost { background: transparent; color: var(--pink-deep); border: 2px solid var(--pink-mid); }
+  .btn-ghost:hover { border-color: var(--pink-accent); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .empty { text-align: center; color: var(--pink-accent); padding: 40px 20px; }
+  .complete { text-align: center; }
+  .complete h2 { color: var(--pink-deep); font-size: 1.5rem; margin-bottom: 16px; }
+  .big-score { font-size: 3.2rem; font-weight: 800; color: var(--pink-deep); }
+  .pct { color: var(--muted); margin-bottom: 24px; }
+  .breakdown { text-align: left; margin: 20px 0; }
+  .breakdown-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; font-size: 0.9rem; }
+  .breakdown-row .name { flex: 0 0 150px; font-weight: 600; }
+  .bar-track { flex: 1; height: 8px; background: var(--pink-mid); border-radius: 999px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--pink-accent); }
+  .complete-actions { display: flex; gap: 12px; justify-content: center; margin-top: 20px; }
+  footer { text-align: center; margin-top: 40px; font-size: 0.8rem; color: var(--pink-accent); opacity: 0.8; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>STEP 1 Review Quiz</h1>
+    <p class="subtitle">Select a topic and test yourself. Answers &amp; explanations included.</p>
+  </header>
+  <div class="card">
+    <div class="controls">
+      <label for="topic">Topic:</label>
+      <select id="topic"></select>
+    </div>
+    <div class="stats">
+      <span id="qcount">Question 0 / 0</span>
+      <span id="score">Score: 0 / 0</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progress"></div></div>
+  </div>
+  <div class="card">
+    <button class="btn btn-ghost" id="toggleGen" style="width:100%;">➕ Generate questions from a transcript</button>
+    <div id="genPanel" style="display:none; margin-top:16px;">
+      <p style="font-size:0.85rem; color:var(--muted); margin-bottom:10px;">
+        Pick a topic above, then paste that topic's transcript here. The new
+        questions are saved on this device and stay put across refreshes, along
+        with your correct/incorrect history. Download them to send in for
+        permanent inclusion for everyone.
+      </p>
+      <textarea id="transcript" rows="6" placeholder="Paste transcript here…"
+        style="width:100%; padding:12px; border-radius:10px; border:2px solid var(--pink-mid);
+        font-family:inherit; font-size:0.95rem; resize:vertical;"></textarea>
+      <input id="genPassword" type="password" placeholder="Access password"
+        style="width:100%; margin-top:10px; padding:12px; border-radius:10px;
+        border:2px solid var(--pink-mid); font-family:inherit; font-size:0.95rem;">
+      <div style="display:flex; gap:10px; align-items:center; margin-top:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary" id="genBtn">Generate</button>
+        <button class="btn btn-ghost" id="downloadBtn" style="display:none;">Download JSON</button>
+        <button class="btn btn-ghost" id="resetTopicBtn" style="display:none;">Reset this topic to original</button>
+        <span id="genStatus" style="font-size:0.85rem; color:var(--muted);"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="empty" id="empty">Loading questions…</div>
+    <div id="quizBody" style="display:none;">
+      <div class="qmeta" id="qmeta"></div>
+      <div class="qtext" id="qtext"></div>
+      <div class="choices" id="choices"></div>
+      <div class="explanation" id="explanation"></div>
+      <div class="nav">
+        <button class="btn btn-ghost" id="prevBtn">← Previous</button>
+        <button class="btn btn-primary" id="nextBtn">Next →</button>
+      </div>
+    </div>
+    <div id="completeBody" class="complete" style="display:none;">
+      <h2>Quiz Complete</h2>
+      <div class="big-score" id="finalScore">0 / 0</div>
+      <div class="pct" id="finalPct">0% correct</div>
+      <div class="breakdown" id="breakdown"></div>
+      <div class="complete-actions">
+        <button class="btn btn-ghost" id="retakeBtn">Retake All</button>
+        <button class="btn btn-primary" id="reviewBtn">Review Missed Questions</button>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="text-align:center;">
+    <p style="font-size:0.85rem; color:var(--muted); margin-bottom:12px;">
+      Your generated questions and history are saved on this device. Back them up
+      here so you don't lose them if you clear your browser or switch devices.
+    </p>
+    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+      <button class="btn btn-ghost" id="exportBtn">⬇ Download all my data</button>
+      <button class="btn btn-ghost" id="importBtn">⬆ Restore from backup</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
+    </div>
+    <span id="dataStatus" style="display:block; margin-top:10px; font-size:0.85rem; color:var(--muted);"></span>
+  </div>
+
+  <footer>Created by Kene Nwodo · Progress saved on this device</footer>
+</div>
+<script>
+const TOPIC_FILES = [
+  { name: "Fetal Lung Development", file: "data/fetal-lung-development.json" },
+  { name: "A-a Gradient & Gas Exchange", file: "data/aa-gradient-gas-exchange.json" },
+  { name: "Aging Physiology", file: "data/aging-physiology.json" },
+  { name: "Pneumonia, Effusion & Pneumothorax Exam", file: "data/pneumonia-effusion-pneumothorax.json" },
+  { name: "Pleural Fluid Analysis", file: "data/pleural-fluid-analysis.json" },
+  { name: "Restrictive & Granulomatous Lung Disease", file: "data/restrictive-granulomatous.json" },
+  { name: "Emphysema & Asbestos-Related Disease", file: "data/emphysema-asbestos.json" },
+  { name: "COPD", file: "data/copd.json" },
+  { name: "Alveolar & Airway Disorders", file: "data/alveolar-airway-disorders.json" },
+  { name: "Pulmonary Embolism & Vascular", file: "data/pulmonary-embolism-vascular.json" },
+  { name: "Sepsis & Oxygen Delivery", file: "data/sepsis-oxygen-delivery.json" },
+  { name: "Respiratory Mechanics", file: "data/respiratory-mechanics.json" },
+  { name: "Neoplasia", file: "data/neoplasia.json" },
+  { name: "Tuberculosis", file: "data/tuberculosis.json" }
+];
+let topicData = {}, activeList = [], activeLabel = "", currentIndex = 0, reviewMode = false;
+let answered = {}, scoreState = {};
+let genTopics = {};   // { topicName: [questions] } — user-generated, saved on this device
+const el = id => document.getElementById(id);
+try {
+  answered = JSON.parse(localStorage.getItem("step1_answered") || "{}");
+  scoreState = JSON.parse(localStorage.getItem("step1_score") || "{}");
+  genTopics = JSON.parse(localStorage.getItem("step1_generated") || "{}");
+} catch (e) { answered = {}; scoreState = {}; genTopics = {}; }
+function save() {
+  localStorage.setItem("step1_answered", JSON.stringify(answered));
+  localStorage.setItem("step1_score", JSON.stringify(scoreState));
+}
+function saveGenerated() {
+  localStorage.setItem("step1_generated", JSON.stringify(genTopics));
+}
+function uidFor(topic, i) { return topic + "#" + i; }
+// Generated questions get STABLE ids (topic + "#gen#" + index), so scoring history
+// sticks across refreshes. Regenerating a topic intentionally resets that topic's ids.
+function genUidFor(topic, i) { return topic + "#gen#" + i; }
+async function init() {
+  const sel = el("topic");
+  let fetchFailed = false;
+  for (const t of TOPIC_FILES) {
+    try {
+      const res = await fetch(t.file);
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (Array.isArray(data) && data.length) {
+        data.forEach((q, i) => { q._uid = uidFor(t.name, i); q._topic = t.name; });
+        topicData[t.name] = data;
+      }
+    } catch (e) { fetchFailed = true; console.warn("Could not load " + t.file, e); }
+  }
+  // Restore any generated topics saved on this device — they override the file versions.
+  for (const name of Object.keys(genTopics)) {
+    const data = genTopics[name];
+    if (Array.isArray(data) && data.length) {
+      data.forEach((q, i) => { q._uid = genUidFor(name, i); q._topic = name; });
+      topicData[name] = data;
+    }
+  }
+  const names = Object.keys(topicData);
+  if (names.length === 0) {
+    el("empty").innerHTML = fetchFailed
+      ? "Questions can't load when this file is opened directly from your computer " +
+        "(the browser blocks it). This works once the site is on Netlify, or run a " +
+        "local server: <code>python3 -m http.server</code> then open " +
+        "<code>http://localhost:8000</code>."
+      : "No question files found. Add JSON files to the data/ folder.";
+    return;
+  }
+  const allOpt = document.createElement("option");
+  allOpt.value = "__all__"; allOpt.textContent = "All Topics"; sel.appendChild(allOpt);
+  for (const name of names) {
+    const opt = document.createElement("option");
+    const mark = genTopics[name] ? " ●" : "";
+    opt.value = name; opt.textContent = name + " (" + topicData[name].length + ")" + mark; sel.appendChild(opt);
+  }
+  sel.addEventListener("change", () => selectTopic(sel.value));
+  el("nextBtn").addEventListener("click", () => go(1));
+  el("prevBtn").addEventListener("click", () => go(-1));
+  el("retakeBtn").addEventListener("click", retakeAll);
+  el("reviewBtn").addEventListener("click", reviewMissed);
+  selectTopic("__all__");
+}
+function buildList(v) {
+  if (v === "__all__") return Object.keys(topicData).flatMap(n => topicData[n]);
+  return topicData[v] || [];
+}
+function selectTopic(v) {
+  activeLabel = v === "__all__" ? "All Topics" : v;
+  activeList = buildList(v); reviewMode = false; currentIndex = 0;
+  el("empty").style.display = "none"; el("completeBody").style.display = "none";
+  el("quizBody").style.display = "block";
+  // show "reset to original" only when this specific topic has generated questions
+  el("resetTopicBtn").style.display = (v !== "__all__" && genTopics[v]) ? "inline-block" : "none";
+  render();
+}
+function render() {
+  if (activeList.length === 0) { showComplete(); return; }
+  const q = activeList[currentIndex];
+  el("qmeta").textContent = q.subtopic || q._topic || activeLabel;
+  el("qtext").textContent = q.question;
+  el("qcount").textContent = "Question " + (currentIndex + 1) + " / " + activeList.length;
+  const box = el("choices"); box.innerHTML = "";
+  const chosen = answered[q._uid]; const isAnswered = chosen !== undefined;
+  q.choices.forEach((choice, i) => {
+    const btn = document.createElement("button"); btn.className = "choice";
+    const letter = String.fromCharCode(65 + i);
+    btn.innerHTML = '<span class="badge">' + letter + '</span><span>' + choice + '</span>';
+    btn.disabled = isAnswered;
+    if (isAnswered) {
+      if (i === q.answer) btn.classList.add("correct");
+      else if (i === chosen) btn.classList.add("wrong");
+      else btn.classList.add("dim");
+    }
+    btn.addEventListener("click", () => pick(q, i));
+    box.appendChild(btn);
+  });
+  const exp = el("explanation");
+  if (isAnswered) {
+    const right = chosen === q.answer;
+    exp.innerHTML = '<div class="verdict ' + (right ? 'right' : 'wrong') + '">' +
+      (right ? 'Correct' : 'Not quite') + '</div>' +
+      '<div class="exp-block"><strong>Answer: ' + String.fromCharCode(65 + q.answer) +
+      '.</strong> ' + q.explanation + '</div>';
+    exp.classList.add("show");
+  } else { exp.classList.remove("show"); }
+  el("prevBtn").disabled = currentIndex === 0;
+  el("nextBtn").textContent = currentIndex === activeList.length - 1 ? "Finish" : "Next →";
+  updateStats();
+}
+function pick(q, i) { answered[q._uid] = i; scoreState[q._uid] = (i === q.answer); save(); render(); }
+function go(dir) {
+  if (dir > 0 && currentIndex === activeList.length - 1) { showComplete(); return; }
+  currentIndex = Math.max(0, Math.min(activeList.length - 1, currentIndex + dir)); render();
+}
+function updateStats() {
+  let correct = 0, total = 0;
+  activeList.forEach(q => { if (answered[q._uid] !== undefined) { total++; if (scoreState[q._uid]) correct++; } });
+  el("score").textContent = "Score: " + correct + " / " + total;
+  const ans = activeList.filter(q => answered[q._uid] !== undefined).length;
+  el("progress").style.width = (ans / activeList.length * 100) + "%";
+}
+function showComplete() {
+  el("quizBody").style.display = "none"; el("completeBody").style.display = "block";
+  let correct = 0, total = activeList.length;
+  activeList.forEach(q => { if (scoreState[q._uid]) correct++; });
+  const pct = total ? Math.round(correct / total * 100) : 0;
+  el("finalScore").textContent = correct + " / " + total;
+  el("finalPct").textContent = pct + "% correct";
+  el("progress").style.width = "100%";
+  const bd = el("breakdown"); bd.innerHTML = "";
+  const byTopic = {};
+  activeList.forEach(q => { const t = q._topic; byTopic[t] = byTopic[t] || { c: 0, n: 0 }; byTopic[t].n++; if (scoreState[q._uid]) byTopic[t].c++; });
+  Object.keys(byTopic).forEach(t => {
+    const { c, n } = byTopic[t]; const p = Math.round(c / n * 100);
+    const row = document.createElement("div"); row.className = "breakdown-row";
+    row.innerHTML = '<span class="name">' + t + '</span>' +
+      '<span class="bar-track"><span class="bar-fill" style="width:' + p + '%"></span></span>' +
+      '<span>' + p + '%</span>';
+    bd.appendChild(row);
+  });
+  const missed = activeList.filter(q => answered[q._uid] !== undefined && !scoreState[q._uid]);
+  el("reviewBtn").style.display = missed.length ? "inline-block" : "none";
+}
+function retakeAll() {
+  activeList.forEach(q => { delete answered[q._uid]; delete scoreState[q._uid]; });
+  save(); reviewMode = false; currentIndex = 0;
+  el("completeBody").style.display = "none"; el("quizBody").style.display = "block"; render();
+}
+function reviewMissed() {
+  const missed = activeList.filter(q => answered[q._uid] !== undefined && !scoreState[q._uid]);
+  if (!missed.length) return;
+  missed.forEach(q => { delete answered[q._uid]; delete scoreState[q._uid]; });
+  save(); activeList = missed; reviewMode = true; currentIndex = 0;
+  el("completeBody").style.display = "none"; el("quizBody").style.display = "block"; render();
+}
+// ---- Generate-from-transcript panel ----
+let lastGenerated = null;
+el("toggleGen").addEventListener("click", () => {
+  const p = el("genPanel");
+  p.style.display = p.style.display === "none" ? "block" : "none";
+});
+el("genBtn").addEventListener("click", async () => {
+  const transcript = el("transcript").value.trim();
+  const status = el("genStatus");
+  const sel = el("topic");
+  const targetTopic = sel.value;
+
+  if (targetTopic === "__all__") {
+    status.textContent = "Pick a specific topic above first (not All Topics), then generate.";
+    return;
+  }
+  if (!transcript) { status.textContent = "Please paste a transcript first."; return; }
+
+  el("genBtn").disabled = true;
+  status.textContent = "Generating… this can take 20-40 seconds.";
+  el("downloadBtn").style.display = "none";
+  try {
+    const res = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ transcript, password: el("genPassword").value })
+    });
+    const data = await res.json();
+    if (!res.ok) { status.textContent = data.error || "Something went wrong."; return; }
+
+    lastGenerated = data.questions;
+
+    // Clear any previous scoring history for THIS topic's old generated ids,
+    // since we're replacing its questions. (Other topics are untouched.)
+    Object.keys(answered).forEach(k => {
+      if (k.startsWith(targetTopic + "#gen#")) { delete answered[k]; delete scoreState[k]; }
+    });
+    save();
+
+    // Give stable ids so history sticks across refreshes, tag the topic,
+    // and persist to this device.
+    data.questions.forEach((q, i) => {
+      q._uid = genUidFor(targetTopic, i);
+      q._topic = targetTopic;
+    });
+    topicData[targetTopic] = data.questions;
+    genTopics[targetTopic] = data.questions.map(({ _uid, _topic, ...rest }) => rest);
+    saveGenerated();
+
+    // refresh the dropdown label count for this topic
+    [...sel.options].forEach(o => {
+      if (o.value === targetTopic) o.textContent = targetTopic + " (" + data.questions.length + ") ●";
+    });
+
+    selectTopic(targetTopic);
+    status.textContent = "Done — " + data.questions.length +
+      " new questions saved for \"" + targetTopic + "\" on this device.";
+    el("downloadBtn").style.display = "inline-block";
+  } catch (e) {
+    status.textContent = "Network error. Please try again.";
+  } finally {
+    el("genBtn").disabled = false;
+  }
+});
+el("downloadBtn").addEventListener("click", () => {
+  if (!lastGenerated) return;
+  // strip internal fields before download
+  const clean = lastGenerated.map(({ _uid, _topic, ...rest }) => rest);
+  const blob = new Blob([JSON.stringify(clean, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = (el("topic").value || "generated").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".json";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// Reset a generated topic back to the original file version, wiping its
+// generated questions and their history from this device.
+el("resetTopicBtn").addEventListener("click", async () => {
+  const topic = el("topic").value;
+  if (topic === "__all__" || !genTopics[topic]) return;
+  if (!confirm('Reset "' + topic + '" to the original questions? This removes the generated ones and their history on this device.')) return;
+  // clear generated scoring history for this topic
+  Object.keys(answered).forEach(k => {
+    if (k.startsWith(topic + "#gen#")) { delete answered[k]; delete scoreState[k]; }
+  });
+  save();
+  delete genTopics[topic];
+  saveGenerated();
+  // reload the original file version
+  const entry = TOPIC_FILES.find(t => t.name === topic);
+  try {
+    const res = await fetch(entry.file);
+    const data = await res.json();
+    data.forEach((q, i) => { q._uid = uidFor(topic, i); q._topic = topic; });
+    topicData[topic] = data;
+  } catch (e) {}
+  [...el("topic").options].forEach(o => {
+    if (o.value === topic) o.textContent = topic + " (" + topicData[topic].length + ")";
+  });
+  lastGenerated = null;
+  el("downloadBtn").style.display = "none";
+  selectTopic(topic);
+  el("genStatus").textContent = '"' + topic + '" reset to original.';
+});
+
+// ---- Export / import all local data (backup) ----
+el("exportBtn").addEventListener("click", () => {
+  const bundle = {
+    _type: "step1-quiz-backup",
+    _version: 1,
+    _exportedAt: new Date().toISOString(),
+    answered: JSON.parse(localStorage.getItem("step1_answered") || "{}"),
+    score: JSON.parse(localStorage.getItem("step1_score") || "{}"),
+    generated: JSON.parse(localStorage.getItem("step1_generated") || "{}")
+  };
+  const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = new Date().toISOString().slice(0, 10);
+  a.href = url; a.download = "step1-quiz-backup-" + stamp + ".json"; a.click();
+  URL.revokeObjectURL(url);
+  el("dataStatus").textContent = "Backup downloaded.";
+});
+
+el("importBtn").addEventListener("click", () => el("importFile").click());
+el("importFile").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let bundle;
+    try { bundle = JSON.parse(reader.result); }
+    catch { el("dataStatus").textContent = "That file isn't a valid backup."; return; }
+    if (bundle._type !== "step1-quiz-backup") {
+      el("dataStatus").textContent = "That doesn't look like a Step 1 Quiz backup file.";
+      return;
+    }
+    if (!confirm("Restore this backup? It will replace the questions and history currently saved on this device.")) return;
+    localStorage.setItem("step1_answered", JSON.stringify(bundle.answered || {}));
+    localStorage.setItem("step1_score", JSON.stringify(bundle.score || {}));
+    localStorage.setItem("step1_generated", JSON.stringify(bundle.generated || {}));
+    el("dataStatus").textContent = "Backup restored. Reloading…";
+    setTimeout(() => location.reload(), 700);
+  };
+  reader.readAsText(file);
+  e.target.value = ""; // allow re-importing the same file later
+});
+
+init();
+</script>
+</body>
+</html>

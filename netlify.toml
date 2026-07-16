@@ -1,0 +1,10 @@
+# Static site + serverless functions.
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+# Nice short URL: /api/generate  ->  the generate function
+[[redirects]]
+  from = "/api/generate"
+  to = "/.netlify/functions/generate"
+  status = 200
