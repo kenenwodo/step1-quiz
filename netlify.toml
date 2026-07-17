@@ -1,10 +1,11 @@
-# Static site + serverless functions.
+# Static site + one serverless function (password check for question requests).
+# Netlify Forms is auto-detected from the hidden blueprint form in index.html.
 [build]
   publish = "."
   functions = "netlify/functions"
 
-# Nice short URL: /api/generate  ->  the generate function
+# Short URL: /api/request-questions -> the function
 [[redirects]]
-  from = "/api/generate"
-  to = "/.netlify/functions/generate"
+  from = "/api/request-questions"
+  to = "/.netlify/functions/request-questions"
   status = 200

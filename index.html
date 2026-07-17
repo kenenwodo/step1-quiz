@@ -95,28 +95,40 @@
     <div class="progress-track"><div class="progress-fill" id="progress"></div></div>
   </div>
   <div class="card">
-    <button class="btn btn-ghost" id="toggleGen" style="width:100%;">➕ Generate questions from a transcript</button>
+    <button class="btn btn-ghost" id="toggleGen" style="width:100%;">✉️ Request new questions from a transcript</button>
     <div id="genPanel" style="display:none; margin-top:16px;">
       <p style="font-size:0.85rem; color:var(--muted); margin-bottom:10px;">
-        Pick a topic above, then paste that topic's transcript here. The new
-        questions are saved on this device and stay put across refreshes, along
-        with your correct/incorrect history. Download them to send in for
-        permanent inclusion for everyone.
+        Pick the topic above, then paste that topic's transcript here and submit.
+        Your transcript is sent privately to be turned into questions — it is not
+        published or stored on the site. The new questions are added to the topic
+        and appear here after the next update. You can keep studying existing
+        topics in the meantime.
       </p>
       <textarea id="transcript" rows="6" placeholder="Paste transcript here…"
         style="width:100%; padding:12px; border-radius:10px; border:2px solid var(--pink-mid);
         font-family:inherit; font-size:0.95rem; resize:vertical;"></textarea>
+      <input id="reqEmail" type="email" placeholder="Your email (optional, so you can be notified)"
+        style="width:100%; margin-top:10px; padding:12px; border-radius:10px;
+        border:2px solid var(--pink-mid); font-family:inherit; font-size:0.95rem;">
       <input id="genPassword" type="password" placeholder="Access password"
         style="width:100%; margin-top:10px; padding:12px; border-radius:10px;
         border:2px solid var(--pink-mid); font-family:inherit; font-size:0.95rem;">
       <div style="display:flex; gap:10px; align-items:center; margin-top:10px; flex-wrap:wrap;">
-        <button class="btn btn-primary" id="genBtn">Generate</button>
-        <button class="btn btn-ghost" id="downloadBtn" style="display:none;">Download JSON</button>
-        <button class="btn btn-ghost" id="resetTopicBtn" style="display:none;">Reset this topic to original</button>
+        <button class="btn btn-primary" id="genBtn">Submit request</button>
         <span id="genStatus" style="font-size:0.85rem; color:var(--muted);"></span>
       </div>
     </div>
   </div>
+
+  <!-- Hidden static blueprint so Netlify detects the form at deploy time.
+       (Netlify can't see forms that exist only via JavaScript.) -->
+  <form name="question-request" netlify netlify-honeypot="bot-field" hidden>
+    <input type="text" name="topic" />
+    <input type="email" name="email" />
+    <textarea name="transcript"></textarea>
+    <input type="text" name="bot-field" />
+  </form>
+
 
   <div class="card">
     <div class="empty" id="empty">Loading questions…</div>
@@ -143,8 +155,8 @@
   </div>
   <div class="card" style="text-align:center;">
     <p style="font-size:0.85rem; color:var(--muted); margin-bottom:12px;">
-      Your generated questions and history are saved on this device. Back them up
-      here so you don't lose them if you clear your browser or switch devices.
+      Your quiz history is saved on this device. Back it up here so you don't
+      lose it if you clear your browser or switch devices.
     </p>
     <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
       <button class="btn btn-ghost" id="exportBtn">⬇ Download all my data</button>
@@ -175,24 +187,16 @@ const TOPIC_FILES = [
 ];
 let topicData = {}, activeList = [], activeLabel = "", currentIndex = 0, reviewMode = false;
 let answered = {}, scoreState = {};
-let genTopics = {};   // { topicName: [questions] } — user-generated, saved on this device
 const el = id => document.getElementById(id);
 try {
   answered = JSON.parse(localStorage.getItem("step1_answered") || "{}");
   scoreState = JSON.parse(localStorage.getItem("step1_score") || "{}");
-  genTopics = JSON.parse(localStorage.getItem("step1_generated") || "{}");
-} catch (e) { answered = {}; scoreState = {}; genTopics = {}; }
+} catch (e) { answered = {}; scoreState = {}; }
 function save() {
   localStorage.setItem("step1_answered", JSON.stringify(answered));
   localStorage.setItem("step1_score", JSON.stringify(scoreState));
 }
-function saveGenerated() {
-  localStorage.setItem("step1_generated", JSON.stringify(genTopics));
-}
 function uidFor(topic, i) { return topic + "#" + i; }
-// Generated questions get STABLE ids (topic + "#gen#" + index), so scoring history
-// sticks across refreshes. Regenerating a topic intentionally resets that topic's ids.
-function genUidFor(topic, i) { return topic + "#gen#" + i; }
 async function init() {
   const sel = el("topic");
   let fetchFailed = false;
@@ -206,14 +210,6 @@ async function init() {
         topicData[t.name] = data;
       }
     } catch (e) { fetchFailed = true; console.warn("Could not load " + t.file, e); }
-  }
-  // Restore any generated topics saved on this device — they override the file versions.
-  for (const name of Object.keys(genTopics)) {
-    const data = genTopics[name];
-    if (Array.isArray(data) && data.length) {
-      data.forEach((q, i) => { q._uid = genUidFor(name, i); q._topic = name; });
-      topicData[name] = data;
-    }
   }
   const names = Object.keys(topicData);
   if (names.length === 0) {
@@ -229,8 +225,7 @@ async function init() {
   allOpt.value = "__all__"; allOpt.textContent = "All Topics"; sel.appendChild(allOpt);
   for (const name of names) {
     const opt = document.createElement("option");
-    const mark = genTopics[name] ? " ●" : "";
-    opt.value = name; opt.textContent = name + " (" + topicData[name].length + ")" + mark; sel.appendChild(opt);
+    opt.value = name; opt.textContent = name + " (" + topicData[name].length + ")"; sel.appendChild(opt);
   }
   sel.addEventListener("change", () => selectTopic(sel.value));
   el("nextBtn").addEventListener("click", () => go(1));
@@ -248,8 +243,6 @@ function selectTopic(v) {
   activeList = buildList(v); reviewMode = false; currentIndex = 0;
   el("empty").style.display = "none"; el("completeBody").style.display = "none";
   el("quizBody").style.display = "block";
-  // show "reset to original" only when this specific topic has generated questions
-  el("resetTopicBtn").style.display = (v !== "__all__" && genTopics[v]) ? "inline-block" : "none";
   render();
 }
 function render() {
@@ -332,111 +325,55 @@ function reviewMissed() {
   save(); activeList = missed; reviewMode = true; currentIndex = 0;
   el("completeBody").style.display = "none"; el("quizBody").style.display = "block"; render();
 }
-// ---- Generate-from-transcript panel ----
-let lastGenerated = null;
+// ---- Request-new-questions panel ----
 el("toggleGen").addEventListener("click", () => {
   const p = el("genPanel");
   p.style.display = p.style.display === "none" ? "block" : "none";
 });
+
 el("genBtn").addEventListener("click", async () => {
   const transcript = el("transcript").value.trim();
+  const email = el("reqEmail").value.trim();
   const status = el("genStatus");
   const sel = el("topic");
   const targetTopic = sel.value;
 
   if (targetTopic === "__all__") {
-    status.textContent = "Pick a specific topic above first (not All Topics), then generate.";
+    status.textContent = "Pick a specific topic above first (not All Topics).";
     return;
   }
   if (!transcript) { status.textContent = "Please paste a transcript first."; return; }
+  if (!el("genPassword").value) { status.textContent = "Please enter the access password."; return; }
 
   el("genBtn").disabled = true;
-  status.textContent = "Generating… this can take 20-40 seconds.";
-  el("downloadBtn").style.display = "none";
+  status.textContent = "Sending your request…";
   try {
-    const res = await fetch("/api/generate", {
+    // The password is checked on the SERVER by this function — it is never
+    // exposed in the browser. On success the function records the transcript.
+    const res = await fetch("/api/request-questions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ transcript, password: el("genPassword").value })
+      body: JSON.stringify({
+        topic: targetTopic,
+        email: email,
+        transcript: transcript,
+        password: el("genPassword").value
+      })
     });
-    const data = await res.json();
-    if (!res.ok) { status.textContent = data.error || "Something went wrong."; return; }
-
-    lastGenerated = data.questions;
-
-    // Clear any previous scoring history for THIS topic's old generated ids,
-    // since we're replacing its questions. (Other topics are untouched.)
-    Object.keys(answered).forEach(k => {
-      if (k.startsWith(targetTopic + "#gen#")) { delete answered[k]; delete scoreState[k]; }
-    });
-    save();
-
-    // Give stable ids so history sticks across refreshes, tag the topic,
-    // and persist to this device.
-    data.questions.forEach((q, i) => {
-      q._uid = genUidFor(targetTopic, i);
-      q._topic = targetTopic;
-    });
-    topicData[targetTopic] = data.questions;
-    genTopics[targetTopic] = data.questions.map(({ _uid, _topic, ...rest }) => rest);
-    saveGenerated();
-
-    // refresh the dropdown label count for this topic
-    [...sel.options].forEach(o => {
-      if (o.value === targetTopic) o.textContent = targetTopic + " (" + data.questions.length + ") ●";
-    });
-
-    selectTopic(targetTopic);
-    status.textContent = "Done — " + data.questions.length +
-      " new questions saved for \"" + targetTopic + "\" on this device.";
-    el("downloadBtn").style.display = "inline-block";
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      status.textContent = data.error || "Something went wrong. Please try again.";
+      return;
+    }
+    status.textContent = "Request sent for \"" + targetTopic +
+      "\". Your questions will be added in an update — keep studying in the meantime.";
+    el("transcript").value = "";
+    el("genPassword").value = "";
   } catch (e) {
     status.textContent = "Network error. Please try again.";
   } finally {
     el("genBtn").disabled = false;
   }
-});
-el("downloadBtn").addEventListener("click", () => {
-  if (!lastGenerated) return;
-  // strip internal fields before download
-  const clean = lastGenerated.map(({ _uid, _topic, ...rest }) => rest);
-  const blob = new Blob([JSON.stringify(clean, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = (el("topic").value || "generated").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".json";
-  a.click();
-  URL.revokeObjectURL(url);
-});
-
-// Reset a generated topic back to the original file version, wiping its
-// generated questions and their history from this device.
-el("resetTopicBtn").addEventListener("click", async () => {
-  const topic = el("topic").value;
-  if (topic === "__all__" || !genTopics[topic]) return;
-  if (!confirm('Reset "' + topic + '" to the original questions? This removes the generated ones and their history on this device.')) return;
-  // clear generated scoring history for this topic
-  Object.keys(answered).forEach(k => {
-    if (k.startsWith(topic + "#gen#")) { delete answered[k]; delete scoreState[k]; }
-  });
-  save();
-  delete genTopics[topic];
-  saveGenerated();
-  // reload the original file version
-  const entry = TOPIC_FILES.find(t => t.name === topic);
-  try {
-    const res = await fetch(entry.file);
-    const data = await res.json();
-    data.forEach((q, i) => { q._uid = uidFor(topic, i); q._topic = topic; });
-    topicData[topic] = data;
-  } catch (e) {}
-  [...el("topic").options].forEach(o => {
-    if (o.value === topic) o.textContent = topic + " (" + topicData[topic].length + ")";
-  });
-  lastGenerated = null;
-  el("downloadBtn").style.display = "none";
-  selectTopic(topic);
-  el("genStatus").textContent = '"' + topic + '" reset to original.';
 });
 
 // ---- Export / import all local data (backup) ----
@@ -446,8 +383,7 @@ el("exportBtn").addEventListener("click", () => {
     _version: 1,
     _exportedAt: new Date().toISOString(),
     answered: JSON.parse(localStorage.getItem("step1_answered") || "{}"),
-    score: JSON.parse(localStorage.getItem("step1_score") || "{}"),
-    generated: JSON.parse(localStorage.getItem("step1_generated") || "{}")
+    score: JSON.parse(localStorage.getItem("step1_score") || "{}")
   };
   const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -474,7 +410,6 @@ el("importFile").addEventListener("change", (e) => {
     if (!confirm("Restore this backup? It will replace the questions and history currently saved on this device.")) return;
     localStorage.setItem("step1_answered", JSON.stringify(bundle.answered || {}));
     localStorage.setItem("step1_score", JSON.stringify(bundle.score || {}));
-    localStorage.setItem("step1_generated", JSON.stringify(bundle.generated || {}));
     el("dataStatus").textContent = "Backup restored. Reloading…";
     setTimeout(() => location.reload(), 700);
   };
